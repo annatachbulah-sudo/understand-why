@@ -19,13 +19,24 @@ st.set_page_config(page_title="Growth Pulse", layout="centered")
 st.markdown(
     """
     <style>
-        .stApp { background-color: #101820; color: #EDE8DD; }
+        @import url('https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap');
+        html, body, [class*="css"] { font-family: 'Calibri', 'Carlito', sans-serif; }
+        .stApp { background-color: #101820; color: #EDE8DD; font-family: 'Calibri', 'Carlito', sans-serif; }
         [data-testid="stMetricValue"] { color: #EDE8DD; }
+         .stButton > button {
+            background-color: #1B2530;
+            color: #EDE8DD;
+            border: 1px solid #3A4756;
+            border-radius: 4px;
+        }
+        .stButton > button:hover {
+            border-color: #C9A227;
+            color: #C9A227;
+        }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 st.caption("TACHBULAH · GROW")
 st.title("Growth Pulse")
 st.caption(
