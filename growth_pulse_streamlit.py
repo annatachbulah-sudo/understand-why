@@ -82,6 +82,68 @@ if st.session_state.user_info is None:
             st.error("Please enter at least your name and email.")
     st.stop()
 
+def save_result(company, rows, components, total, band, narrative):
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open("Growth Pulse Users").worksheet("Results")
+    revenue_str = ", ".join(str(v) for v in rows["revenue"])
+    cost_str = ", ".join(str(v) for v in rows["cost"])
+    profit_str = ", ".join(str(v) for v in rows["profit"])
+    sheet.append_row(
+        [
+            str(datetime.datetime.now()),
+            company,
+            len(rows),
+            revenue_str,
+            cost_str,
+            profit_str,
+            f"{components[0][2]:.0f}",
+            f"{components[1][2]:.0f}",
+            f"{components[2][2]:.0f}",
+            f"{components[3][2]:.0f}",
+            f"{total:.1f}",
+            band,
+            narrative,
+        ]
+    )
+
+
+def load_results():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open("Growth Pulse Users").worksheet("Results")
+    records = sheet.get_all_records()
+    return pd.DataFrame(records)
+
+
+st.sidebar.caption("TACHBULAH · GROW")
+mode = st.sidebar.radio("View", ["Analyze", "Past Results"])
+
+if mode == "Past Results":
+    st.title("Past Growth Pulse Analyses")
+    st.caption("Saved case studies from the GROW research project.")
+    try:
+        results_df = load_results()
+    except Exception:
+        st.error("Couldn't load saved results — check the Results tab exists and is shared.")
+        st.stop()
+    if results_df.empty:
+        st.info("No results saved yet.")
+    else:
+        for _, r in results_df.iterrows():
+            st.markdown(f"### {r['Company']} — {r['Total']} ({r['Band']})")
+            st.write(r["Narrative"])
+            st.caption(f"Revenue: {r['Revenue']}")
+            st.caption(f"Costs: {r['Costs']}")
+            st.markdown("---")
+    st.stop()
+
 SAMPLE = [
     {"revenue": 100, "cost": 82},
     {"revenue": 112, "cost": 90},
@@ -234,5 +296,22 @@ tally_df = pd.DataFrame(
 )
 st.table(tally_df)
 
-st.markdown(f"## {total:.0f} — :{color}[{band}]")
-st.write(narrative)
+    st.markdown(f"## {total:.0f} — :{color}[{band}]")
+    st.write(narrative)
+
+    st.markdown("---")
+    st.subheader("Save this analysis")
+    company = st.text_input(
+        "Case study / company name", placeholder="e.g. Eco Hotels & Resorts"
+    )
+    if st.button("Save to Results"):
+        if company:
+            try:
+                save_result(company, edited, components, total, band, narrative)
+                st.success(f"Saved '{company}' to Past Results.")
+            except Exception:
+                st.error(
+                    "Couldn't save — check the Results tab exists and is shared with the service account."
+                )
+        else:
+            st.warning("Enter a company or case name first.")
