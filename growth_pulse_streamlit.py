@@ -5,13 +5,17 @@ Same tool, same scoring logic as the React version — rewritten in Python
 so you can compare the two languages side by side.
 
 To run this on your own machine:
-    pip install streamlit pandas plotly
+    pip install streamlit pandas plotly gspread google-auth
     streamlit run growth_pulse_streamlit.py
 """
 
+import datetime
+
+import gspread
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from google.oauth2.service_account import Credentials
 
 # ---------- Page setup ----------
 st.set_page_config(page_title="Growth Pulse", layout="centered")
@@ -23,7 +27,7 @@ st.markdown(
         html, body, [class*="css"] { font-family: 'Calibri', 'Carlito', sans-serif; }
         .stApp { background-color: #101820; color: #EDE8DD; font-family: 'Calibri', 'Carlito', sans-serif; }
         [data-testid="stMetricValue"] { color: #EDE8DD; }
-         .stButton > button {
+        .stButton > button {
             background-color: #1B2530;
             color: #EDE8DD;
             border: 1px solid #3A4756;
@@ -33,15 +37,50 @@ st.markdown(
             border-color: #C9A227;
             color: #C9A227;
         }
+        [data-testid="stTable"] * { color: #EDE8DD !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 st.caption("TACHBULAH · GROW")
 st.title("Growth Pulse")
 st.caption(
     "Enter revenue and costs for each year to see how the business is actually doing."
 )
+
+# ---------- Visitor capture (logs to Google Sheets) ----------
+def log_user(name, email, business):
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open("Growth Pulse Users").sheet1
+    sheet.append_row([str(datetime.datetime.now()), name, email, business])
+
+
+if "user_info" not in st.session_state:
+    st.session_state.user_info = None
+
+if st.session_state.user_info is None:
+    st.subheader("Quick intro before you start")
+    with st.form("intro_form"):
+        name = st.text_input("Your name")
+        email = st.text_input("Email")
+        business = st.text_input("Business name (optional)")
+        submitted = st.form_submit_button("Continue to Growth Pulse")
+    if submitted:
+        if name and email:
+            try:
+                log_user(name, email, business)
+            except Exception:
+                st.warning("Couldn't save your details, but you can still continue.")
+            st.session_state.user_info = {"name": name, "email": email}
+            st.rerun()
+        else:
+            st.error("Please enter at least your name and email.")
+    st.stop()
 
 SAMPLE = [
     {"revenue": 100, "cost": 82},
