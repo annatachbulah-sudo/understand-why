@@ -296,22 +296,22 @@ tally_df = pd.DataFrame(
 )
 st.table(tally_df)
 
-    st.markdown(f"## {total:.0f} — :{color}[{band}]")
-    st.write(narrative)
+st.markdown(f"## {total:.0f} — :{color}[{band}]")
+st.write(narrative)
 
-    st.markdown("---")
-    st.subheader("Save this analysis")
-    company = st.text_input(
-        "Case study / company name", placeholder="e.g. Eco Hotels & Resorts"
-    )
-    if st.button("Save to Results"):
-        if company:
-            try:
-                save_result(company, edited, components, total, band, narrative)
-                st.success(f"Saved '{company}' to Past Results.")
-            except Exception:
-                st.error(
-                    "Couldn't save — check the Results tab exists and is shared with the service account."
-                )
-        else:
-            st.warning("Enter a company or case name first.")
+st.markdown("---")
+st.subheader("Save this analysis")
+company = st.text_input(
+    "Case study / company name", placeholder="e.g. Eco Hotels & Resorts"
+)
+if st.button("Save to Results"):
+    if company:
+        try:
+            save_result(company, edited, components, total, band, narrative)
+            st.success(f"Saved '{company}' to Past Results.")
+        except Exception:
+            st.error(
+                "Couldn't save — check the Results tab exists and is shared with the service account."
+            )
+    else:
+        st.warning("Enter a company or case name first.")
